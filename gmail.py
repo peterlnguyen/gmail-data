@@ -1,4 +1,5 @@
 import email, getpass, imaplib, os
+from datetime import date, timedelta
 from credentials import *
 
 detach_dir = './attachments' # directory where to save attachments (default: current)
@@ -9,7 +10,9 @@ m.login(EMAIL, PHRASE)
 m.select("[Gmail]/All Mail") # here you a can choose a mail box like INBOX instead
 # use m.list() to get all the mailboxes
 
-search_criteria = '(SINCE "22-Jul-2013")'
+yesterday = (date.today() - timedelta(1)).strftime("%d-%B-%Y")
+# search_criteria = '(SINCE "22-July-2013")'
+search_criteria = '(SINCE ' + yesterday + ')'
 resp, items = m.search(None, search_criteria) # you could filter using the IMAP rules here (check http://www.example-code.com/csharp/imap-search-critera.asp)
 items = items[0].split() # getting the mails id
 
@@ -46,9 +49,9 @@ for emailid in items:
 
 		att_path = os.path.join(detach_dir, filename)
 
-		#Check if its already there
-		if not os.path.isfile(att_path) :
-			# finally write the stuff
-			fp = open(att_path, 'wb')
-			fp.write(part.get_payload(decode=True))
-			fp.close()
+		##Check if its already there
+		#if not os.path.isfile(att_path) :
+			## finally write the stuff
+			#fp = open(att_path, 'wb')
+			#fp.write(part.get_payload(decode=True))
+			#fp.close()
