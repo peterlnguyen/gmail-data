@@ -1,6 +1,7 @@
 import email, getpass, imaplib, os
 from datetime import date, timedelta
 from credentials import *
+from MLStripper import *
 
 detach_dir = './attachments' # directory where to save attachments (default: current)
 
@@ -10,12 +11,14 @@ m.login(EMAIL, PHRASE)
 m.select("[Gmail]/All Mail") # here you a can choose a mail box like INBOX instead
 # use m.list() to get all the mailboxes
 
+# configure date
 yesterday = (date.today() - timedelta(1)).strftime("%d-%B-%Y")
 search_criteria = '(SINCE ' + yesterday + ')'
-resp, items = m.search(None, search_criteria) # you could filter using the IMAP rules here (check http://www.example-code.com/csharp/imap-search-critera.asp)
 
+resp, items = m.search(None, search_criteria) # you could filter using the IMAP rules here (check http://www.example-code.com/csharp/imap-search-critera.asp)
 items = items[0].split() # getting the mails id
 
+# helper for retrieving email body content
 def extract_body(payload):
 	if isinstance(payload, str):
 		return payload
@@ -37,36 +40,11 @@ try:
 		print "Date: " + mail["Date"] + "\n"
 
 		payload = mail.get_payload()
-		body = extract_body(payload)
+		body_html = extract_body(payload)
+		body = strip_tags(body_html)	
 
-		print(body)+ "\n"
+		print(body) + "\n"
 
-		# we use walk to create a generator so we can iterate on the parts and forget about the recursive headache
-		for part in mail.walk():
-			# multipart are just containers, so we skip them
-			if part.get_content_maintype() == 'multipart':
-				continue
-
-			# is this part an attachment ?
-			if part.get('Content-Disposition') is None:
-				continue
-
-			filename = part.get_filename()
-			counter = 1
-
-			# if there is no filename, we create one with a counter to avoid duplicates
-			if not filename:
-				filename = 'part-%03d%s' % (counter, 'bin')
-				counter += 1
-
-			att_path = os.path.join(detach_dir, filename)
-
-			##Check if its already there
-			#if not os.path.isfile(att_path) :
-				## finally write the stuff
-				#fp = open(att_path, 'wb')
-				#fp.write(part.get_payload(decode=True))
-				#fp.close()
 finally:
 	try:
 		m.close()
